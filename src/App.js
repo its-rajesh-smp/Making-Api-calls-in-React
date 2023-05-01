@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import MoviesList from './components/MoviesList';
 import './App.css';
@@ -13,15 +13,16 @@ function App() {
   const [loader, setLoader] = useState(false)
   const [error, setError] = useState(null)
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     if (movieList.length === 0) { setLoader(true) }
     setError(null)
 
 
-
     interval = setInterval(async function () {
+
+      console.log("SS");
       try {
-        const response = await fetch("https://swapi.dev/api/film/")
+        const response = await fetch("https://swapi.dev/api/films/")
         const { results } = await response.json()
         const newDataArrary = results.map(movie => {
           return { title: movie.title, releaseDate: movie.release_date, openingText: movie.opening_crawl, id: movie.episode_id }
@@ -29,12 +30,19 @@ function App() {
         setMovieList(newDataArrary)
         console.log("DATA FETCHED");
         clearInterval(interval)
+
       } catch (error) {
         setError('Something went wrong ....Retrying')
       }
       setLoader(false)
     }, 1000);
-  }
+  }, [])
+
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
 
 
   return (
