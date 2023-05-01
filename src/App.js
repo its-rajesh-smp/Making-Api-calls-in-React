@@ -4,9 +4,9 @@ import MoviesList from './components/MoviesList';
 import './App.css';
 
 
-
-
 let interval;
+const API_URL = "https://dummy-react-project-26fa0-default-rtdb.asia-southeast1.firebasedatabase.app/movies"
+
 function App() {
 
   const [movieList, setMovieList] = useState([])
@@ -22,14 +22,19 @@ function App() {
 
     interval = setInterval(async function () {
 
-      console.log("SS");
+      console.log("INTERVAL CALL");
       try {
-        const response = await fetch("https://swapi.dev/api/films/")
-        const { results } = await response.json()
-        const newDataArrary = results.map(movie => {
-          return { title: movie.title, releaseDate: movie.release_date, openingText: movie.opening_crawl, id: movie.episode_id }
+        const response = await fetch(API_URL + ".json")
+        const results = await response.json()
+
+        const newMoviesArray = Object.keys(results)
+
+        const newDataArrary = newMoviesArray.map(movieId => {
+          return { title: results[movieId].title, releaseDate: results[movieId].releaseDate, openingText: results[movieId].openingText, id: movieId }
         })
         setMovieList(newDataArrary)
+
+
         console.log("DATA FETCHED");
         clearInterval(interval)
 
@@ -54,11 +59,56 @@ function App() {
   const [openingText, setOpeningText] = useState("")
   const [releaseDate, setReleaseDate] = useState("")
 
-  const addNewMovieHandeler = (e) => {
+  const addNewMovieHandeler = async (e) => {
     e.preventDefault()
-    const newMovieObject = { id: Math.random(), title: title, openingText: openingText, releaseDate: releaseDate }
-    console.log(newMovieObject);
+    try {
+      const newMovieObject = { title: title, openingText: openingText, releaseDate: releaseDate }
+
+      const response = await fetch(API_URL + ".json", {
+        method: "POST",
+        body: JSON.stringify(newMovieObject)
+      })
+
+      const data = await response.json()
+      newMovieObject.id = data.name
+
+      setMovieList(prev => [newMovieObject, ...prev])
+    } catch (error) {
+      console.log(error);
+    }
   }
+
+
+  /* -------------------------------------------------------------------------- */
+  /*                               DELETE A MOVIE                               */
+  /* -------------------------------------------------------------------------- */
+
+  const deleteAMovieHandeler = async (movieId) => {
+
+    try {
+      await fetch(API_URL + "/" + movieId + ".json", {
+        method: "DELETE"
+      })
+      setMovieList(prev => {
+        const deletedData = prev.filter((val) => {
+          return movieId !== val.id
+        })
+
+        console.log(deletedData);
+        return deletedData
+      })
+
+
+
+    } catch (error) {
+      console.log(error);
+    }
+
+
+
+    console.log("DELETED");
+  }
+
 
 
   return (
@@ -83,7 +133,7 @@ function App() {
         {loader && <h1>Loading</h1>}
         {error}
         {error !== null && <button onClick={() => { clearInterval(interval) }}>Stop Retrying</button>}
-        <MoviesList movies={movieList} />
+        <MoviesList deleteAMovieHandeler={deleteAMovieHandeler} movies={movieList} />
       </section>
 
 
